@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Certificate Verification Portal | Tryidol Technologies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC;
+    --text-primary:#071A41;
+    --text-secondary:#60708F;
+    --gold:#E7A900;
+    --gold-soft:#FDF3D9;
+    --border:#D9E0EA;
+    --card:#FFFFFF;
+    --info-card:#F7F9FC;
+    --shadow: 0 10px 30px -12px rgba(7,26,65,0.12), 0 2px 8px -2px rgba(7,26,65,0.06);
+    --radius-lg: 22px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  .app-shell{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 32px 16px;
+  }
+
+  /* ---------- Shared card ---------- */
+  .panel{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    width:100%;
+  }
+
+  /* ---------- Icon badge ---------- */
+  .icon-badge{
+    width:64px; height:64px;
+    background:var(--gold-soft);
+    border-radius:18px;
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto;
+    color:var(--gold);
+  }
+  .icon-badge svg{ width:28px; height:28px; stroke:var(--gold); }
+
+  /* ---------- SCREEN: Search ---------- */
+  #search-screen{
+    max-width:420px;
+  }
+  .search-card{
+    padding:40px 36px 36px;
+    text-align:center;
+  }
+  .search-card h1{
+    font-size:24px;
+    font-weight:800;
+    margin:20px 0 8px;
+    letter-spacing:-0.02em;
+  }
+  .search-card p.subtitle{
+    color:var(--text-secondary);
+    font-size:14px;
+    margin:0 0 28px;
+    line-height:1.5;
+  }
+
+  .input-wrap{
+    position:relative;
+    margin-bottom:16px;
+  }
+  .input-wrap svg.search-icon{
+    position:absolute;
+    left:16px; top:50%;
+    transform:translateY(-50%);
+    width:18px; height:18px;
+    stroke:var(--text-secondary);
+    pointer-events:none;
+  }
+  #cert-input{
+    width:100%;
+    padding:15px 16px 15px 44px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:#FBFCFE;
+    font-size:14px;
+    font-family:inherit;
+    color:var(--text-primary);
+    letter-spacing:0.02em;
+    outline:none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  #cert-input::placeholder{
+    color:#A9B3C4;
+    letter-spacing:0.02em;
+  }
+  #cert-input:focus{
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(231,169,0,0.15);
+  }
+
+  .verify-btn{
+    width:100%;
+    padding:16px;
+    border:none;
+    border-radius:12px;
+    font-size:15px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:not-allowed;
+    background:#8A93A6;
+    color:#fff;
+    transition: background .2s ease, transform .08s ease, box-shadow .2s ease;
+    letter-spacing:0.01em;
+  }
+  .verify-btn.active{
+    background:var(--text-primary);
+    cursor:pointer;
+    box-shadow:0 6px 16px -4px rgba(7,26,65,0.35);
+  }
+  .verify-btn.active:hover{
+    background:#0d2657;
+  }
+  .verify-btn.active:active{
+    transform:scale(0.98);
+  }
+
+  .error-msg{
+    margin-top:16px;
+    padding:12px 14px;
+    border-radius:10px;
+    background:#FDECEC;
+    border:1px solid #F5C2C2;
+    color:#B3261E;
+    font-size:13px;
+    text-align:left;
+    display:none;
+    line-height:1.5;
+  }
+  .error-msg strong{
+    display:block;
+    font-size:13.5px;
+    margin-bottom:2px;
+  }
+  .error-msg.show{ display:block; }
+
+  @keyframes shake{
+    10%,90% { transform: translateX(-1px); }
+    20%,80% { transform: translateX(2px); }
+    30%,50%,70% { transform: translateX(-4px); }
+    40%,60% { transform: translateX(4px); }
+  }
+  .shake{ animation: shake .5s cubic-bezier(.36,.07,.19,.97) both; }
+
+  /* ---------- SCREEN: Result ---------- */
+  #result-screen{
+    max-width:640px;
+    width:517px;
+  }
+  .back-link{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:none;
+    border:none;
+    color:var(--text-primary);
+    font-family:inherit;
+    font-weight:600;
+    font-size:14.5px;
+    cursor:pointer;
+    padding:8px 4px;
+    margin-bottom:16px;
+    border-radius:8px;
+    transition: opacity .15s ease, transform .1s ease;
+  }
+  .back-link svg{ width:16px; height:16px; stroke:var(--text-primary); }
+  .back-link:hover{ opacity:0.65; }
+  .back-link:active{ transform: scale(0.97); }
+
+  .result-card{
+    padding:44px 40px 36px;
+    text-align:center;
+  }
+  .result-card h1{
+    font-size:26px;
+    font-weight:800;
+    margin:20px 0 8px;
+    letter-spacing:-0.02em;
+  }
+  .result-card p.subtitle{
+    color:var(--text-secondary);
+    font-size:14.5px;
+    line-height:1.55;
+    max-width:420px;
+    margin:0 auto;
+  }
+  .divider{
+    height:1px;
+    background:var(--border);
+    margin:28px 0;
+    border:none;
+  }
+
+  .info-card{
+    background:var(--info-card);
+    border-radius:16px;
+    padding:6px 24px;
+    text-align:left;
+  }
+  .info-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:16px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .info-row:last-child{ border-bottom:none; }
+  .info-label{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--text-secondary);
+    font-size:13.5px;
+    font-weight:500;
+    flex-shrink:0;
+  }
+  .info-label svg{
+    width:16px; height:16px;
+    stroke:var(--gold);
+    flex-shrink:0;
+  }
+  .info-value{
+    font-weight:700;
+    font-size:14.5px;
+    color:var(--text-primary);
+    text-align:right;
+    word-break:break-word;
+  }
+  .info-value.accent{ color:var(--gold); }
+
+  /* ---------- Transitions ---------- */
+  .screen{
+    display:none;
+  }
+  .screen.visible{
+    display:block;
+    animation: fadeSlideIn .38s cubic-bezier(.22,.61,.36,1);
+  }
+  @keyframes fadeSlideIn{
+    from{ opacity:0; transform: translateY(10px) scale(0.98); }
+    to{ opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:480px){
+    .search-card{ padding:32px 22px 28px; }
+    .result-card{ padding:32px 20px 26px; }
+    .info-card{ padding:4px 16px; }
+    .info-row{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:6px;
+      padding:14px 0;
+    }
+    .info-value{ text-align:left; }
+    .result-card h1{ font-size:22px; }
+    .search-card h1{ font-size:20px; }
+  }
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{ background:#fff; }
+    .back-link{ display:none !important; }
+    .panel{ box-shadow:none; border:none; }
+    .app-shell{ padding:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ================= SEARCH SCREEN ================= -->
+  <div id="search-screen" class="screen">
+    <div class="panel search-card">
+      <div class="icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>
+      </div>
+      <h1>Enter Certificate or Roll No</h1>
+      <p class="subtitle">Verify official internship certificates instantly</p>
+
+      <div class="input-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="cert-input" type="text" placeholder="E.G. TT-INWD-1234 OR 24DPEL001HY" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <button id="verify-btn" class="verify-btn" disabled>Verify</button>
+
+      <div id="error-msg" class="error-msg">
+        <strong id="error-title"></strong>
+        <span id="error-body"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= RESULT SCREEN ================= -->
+  <div id="result-screen" class="screen">
+    <button class="back-link" id="back-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Back to Verification Search
+    </button>
+
+    <div class="panel result-card">
+      <div class="icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+      </div>
+      <h1>Authentic &amp; Verified</h1>
+      <p class="subtitle">This digital credential is officially issued and verified by <strong id="org-name-sub">Tryidol Technologies</strong>.</p>
+
+      <hr class="divider" />
+
+      <div class="info-card" id="info-card"></div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ 1. CERTIFICATE DATABASE ============ */
+  // Add more certificate objects to this array to support additional students.
+  const certificates = [
+  {
+    name: "MD JAISH",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT001HY",
+    enrollmentNo: "A240418",
+    certificateNo: "TT-INWD-8779",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MANTASHA NAAZ",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT003HY",
+    enrollmentNo: "A240420",
+    certificateNo: "TT-INWD-8778",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MD TALIM HUSSAIN",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT005HY",
+    enrollmentNo: "A240422",
+    certificateNo: "TT-INWD-1640",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MD SADIQ",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT007HY",
+    enrollmentNo: "A240424",
+    certificateNo: "TT-INWD-8779",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MOHAMMAD IMRAN RAZZAQUE",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT008HY",
+    enrollmentNo: "A240425",
+    certificateNo: "TT-INWD-8672",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "ZAID AHMAD",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT009HY",
+    enrollmentNo: "A240426",
+    certificateNo: "TT-INWD-8780",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "ZANOBIA RAHMAN",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT010HY",
+    enrollmentNo: "A240427",
+    certificateNo: "TT-INWD-6849",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "SHAKIB ALAM",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT012HY",
+    enrollmentNo: "A240429",
+    certificateNo: "TT-INWD-8781",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "RAIYAN AKHTAR",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT017HY",
+    enrollmentNo: "A240436",
+    certificateNo: "TT-INWD-6850",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "AMAN KHAN",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT018HY",
+    enrollmentNo: "A240437",
+    certificateNo: "TT-INWD-8000",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "AISHA TABREZ",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT021HY",
+    enrollmentNo: "A240442",
+    certificateNo: "TT-INWD-6845",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "ATIQUA TABREZ",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT023HY",
+    enrollmentNo: "A240446",
+    certificateNo: "TT-INWD-6846",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "FARHAN ALAM",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT024HY",
+    enrollmentNo: "A240447",
+    certificateNo: "TT-INWD-6848",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "AFROJ ANSARI",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT026HY",
+    enrollmentNo: "A240449",
+    certificateNo: "TT-INWD-8782",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "DILDAR KHAN",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT029HY",
+    enrollmentNo: "A240452",
+    certificateNo: "TT-INWD-2042",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MUHAMMAD EBRAHEM HASAN SURI",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT030HY",
+    enrollmentNo: "A240453",
+    certificateNo: "TT-INWD-6333",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MD EBADULLAH",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT032HY",
+    enrollmentNo: "A240455",
+    certificateNo: "TT-INWD-8783",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MD YUSUF HUSSAIN",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT035HY",
+    enrollmentNo: "A240458",
+    certificateNo: "TT-INWD-8758",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "SAIRA PARWEEN",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT038HY",
+    enrollmentNo: "A240461",
+    certificateNo: "TT-INWD-6847",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "YUSUF AJAD",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT040HY",
+    enrollmentNo: "A240506",
+    certificateNo: "TT-INWD-7801",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MD IRFAN",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "24DPIT041HY",
+    enrollmentNo: "A240507",
+    certificateNo: "TT-INWD-9170",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MD SAQIB",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "23DPIT012HY",
+    enrollmentNo: "A231130",
+    certificateNo: "TT-INWD-9184",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MD AZAD HUSSAIN",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "23DPIT021HY",
+    enrollmentNo: "A231113",
+    certificateNo: "TT-INWD-9142",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "MD EZAN",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "25DPIT002HY",
+    enrollmentNo: "A251864",
+    certificateNo: "TT-INWD-9135",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  },
+  {
+    name: "AMAN ANSARI",
+    course: "Diploma in IT",
+    domain: "Web Development with AI",
+    campus: "MANUU Polytechnic, Hyderabad",
+    rollNo: "25DPIT003HY",
+    enrollmentNo: "	A251865",
+    certificateNo: "TT-INWD-9764",
+    issueDate: "August 17, 2026",
+    organization: "Tryidol Technologies"
+  }
+];
+  /* ============ 2. DOM REFERENCES ============ */
+  const searchScreen  = document.getElementById('search-screen');
+  const resultScreen  = document.getElementById('result-screen');
+  const certInput     = document.getElementById('cert-input');
+  const verifyBtn     = document.getElementById('verify-btn');
+  const errorMsg      = document.getElementById('error-msg');
+  const errorTitle    = document.getElementById('error-title');
+  const errorBody     = document.getElementById('error-body');
+  const backBtn       = document.getElementById('back-btn');
+  const infoCard      = document.getElementById('info-card');
+  const orgNameSub     = document.getElementById('org-name-sub');
+  const searchCardPanel = document.querySelector('.search-card');
+
+  /* ============ 3. UTILITIES ============ */
+
+  // Safe text-setter -- never uses innerHTML with raw certificate data.
+  function setText(el, text){
+    el.textContent = text;
+  }
+
+  function normalize(value){
+    return (value || "").trim().toUpperCase();
+  }
+
+  function findCertificate(query){
+    const norm = normalize(query);
+    if (!norm) return null;
+    return certificates.find(function(c){
+      return c.rollNo.toUpperCase() === norm || c.certificateNo.toUpperCase() === norm;
+    }) || null;
+  }
+
+  function hideError(){
+    errorMsg.classList.remove('show');
+    setText(errorTitle, "");
+    setText(errorBody, "");
+  }
+
+  function showError(title, body){
+    setText(errorTitle, title);
+    setText(errorBody, body);
+    errorMsg.classList.add('show');
+    searchCardPanel.classList.remove('shake');
+    // Force reflow so the animation can restart if triggered repeatedly.
+    void searchCardPanel.offsetWidth;
+    searchCardPanel.classList.add('shake');
+  }
+
+  searchCardPanel.addEventListener('animationend', function(){
+    searchCardPanel.classList.remove('shake');
+  });
+
+  function updateVerifyBtnState(){
+    const hasValue = certInput.value.trim().length > 0;
+    verifyBtn.disabled = !hasValue;
+    verifyBtn.classList.toggle('active', hasValue);
+  }
+
+  /* ============ 4. ICON LIBRARY FOR INFO ROWS ============ */
+  const icons = {
+    user: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>',
+    course: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+    domain: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+    campus: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+    hash: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>',
+    enrollment: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>',
+    certificate: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M9 13.5 7 22l5-3 5 3-2-8.5"/></svg>',
+    date: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    org: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>'
+  };
+
+  /* ============ 5. RENDER CERTIFICATE ============ */
+  function buildInfoRow(iconKey, label, value, accent){
+    const row = document.createElement('div');
+    row.className = 'info-row';
+
+    const left = document.createElement('div');
+    left.className = 'info-label';
+    left.innerHTML = icons[iconKey]; // static trusted icon markup only
+    const labelSpan = document.createElement('span');
+    setText(labelSpan, label);
+    left.appendChild(labelSpan);
+
+    const right = document.createElement('div');
+    right.className = 'info-value' + (accent ? ' accent' : '');
+    setText(right, value);
+
+    row.appendChild(left);
+    row.appendChild(right);
+    return row;
+  }
+
+  function renderCertificate(cert){
+    // Clear previous content safely
+    infoCard.innerHTML = "";
+
+    setText(orgNameSub, cert.organization);
+
+    infoCard.appendChild(buildInfoRow('user', 'Intern Name', cert.name, false));
+    infoCard.appendChild(buildInfoRow('course', 'Course', cert.course, false));
+    infoCard.appendChild(buildInfoRow('domain', 'Internship Domain', cert.domain, false));
+    infoCard.appendChild(buildInfoRow('campus', 'Campus', cert.campus, false));
+    infoCard.appendChild(buildInfoRow('hash', 'Roll No.', cert.rollNo, false));
+    infoCard.appendChild(buildInfoRow('enrollment', 'Enrollment No.', cert.enrollmentNo, false));
+    infoCard.appendChild(buildInfoRow('certificate', 'Certificate No.', cert.certificateNo, true));
+    infoCard.appendChild(buildInfoRow('date', 'Date of Issue', cert.issueDate, false));
+    infoCard.appendChild(buildInfoRow('org', 'Issuing Organization', cert.organization, true));
+  }
+
+  /* ============ 6. SCREEN SWITCHING ============ */
+  function showSearchScreen(){
+    resultScreen.classList.remove('visible');
+    searchScreen.classList.add('visible');
+  }
+
+  function showResultScreen(){
+    searchScreen.classList.remove('visible');
+    resultScreen.classList.add('visible');
+    window.scrollTo(0, 0);
+  }
+
+  /* ============ 7. VERIFY ACTION ============ */
+  function attemptVerify(){
+    const rawValue = certInput.value;
+    const trimmed = rawValue.trim();
+
+    if (!trimmed){
+      showError("Please enter a Certificate Number or Roll Number.", "");
+      return;
+    }
+
+    const cert = findCertificate(trimmed);
+
+    if (!cert){
+      showError("Certificate Not Found", "Please check the Certificate Number or Roll Number and try again.");
+      return;
+    }
+
+    hideError();
+    renderCertificate(cert);
+
+    // Update URL for shareability without reloading the page.
+    const newUrl = window.location.pathname + "?roll=" + encodeURIComponent(cert.rollNo);
+    window.history.pushState({ rollNo: cert.rollNo }, "", newUrl);
+
+    showResultScreen();
+  }
+
+  /* ============ 8. EVENT LISTENERS ============ */
+  certInput.addEventListener('input', function(){
+    updateVerifyBtnState();
+    if (errorMsg.classList.contains('show')) hideError();
+  });
+
+  certInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){
+      e.preventDefault();
+      attemptVerify();
+    }
+  });
+
+  verifyBtn.addEventListener('click', function(){
+    if (verifyBtn.disabled) return;
+    attemptVerify();
+  });
+
+  backBtn.addEventListener('click', function(){
+    // Remove certificate URL parameters
+    window.history.pushState({}, "", window.location.pathname);
+    certInput.value = "";
+    updateVerifyBtnState();
+    hideError();
+    showSearchScreen();
+  });
+
+  window.addEventListener('popstate', function(){
+    handleUrlParams();
+  });
+
+  /* ============ 9. URL PARAMETER HANDLING ============ */
+  function handleUrlParams(){
+    const params = new URLSearchParams(window.location.search);
+    const rollParam = params.get('roll');
+    const certParam = params.get('certificate');
+
+    let cert = null;
+
+    if (rollParam){
+      cert = findCertificate(rollParam);
+    } else if (certParam){
+      cert = findCertificate(certParam);
+    }
+
+    if (cert){
+      hideError();
+      renderCertificate(cert);
+      showResultScreen();
+    } else if (rollParam || certParam){
+      // Unknown / invalid URL parameter -> fall back to search screen with an error.
+      showSearchScreen();
+      showError("Certificate Not Found", "Please check the Certificate Number or Roll Number and try again.");
+    } else {
+      showSearchScreen();
+    }
+  }
+
+  /* ============ 10. INIT ============ */
+  updateVerifyBtnState();
+  handleUrlParams();
+
+})();
+</script>
+
+</body>
+</html>
